@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  9router:
+    image: decolua/9router:latest
+    container_name: local-toolbox-9router
+    env_file:
+      - .env
+    environment:
+      DATA_DIR: /app/data
+      PORT: "20128"
+      HOSTNAME: 0.0.0.0
+      NODE_ENV: production
+      BASE_URL: "${PUBLIC_URL}"
+      NEXT_PUBLIC_BASE_URL: "${PUBLIC_URL}"
+      REQUIRE_API_KEY: "true"
+    ports:
+      - "${NINE_ROUTER_PORT}:20128"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+
+  # Token Saver "Compress context". In the 9Router dashboard set the Headroom URL to http://headroom:8787
+  headroom:
+    build:
+      context: .
+      dockerfile_inline: |
+        FROM python:3.12-slim
+        RUN pip install --no-cache-dir "headroom-ai[proxy]"
+    command: ["headroom", "proxy", "--host", "0.0.0.0", "--port", "8787"]
+    container_name: local-toolbox-9router-headroom
+    environment:
+      HEADROOM_UPDATE_CHECK: "off"
+    volumes:
+      # Cache for models downloaded on first run
+      - ./data/headroom:/root/.cache
+    restart: unless-stopped
+
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: local-toolbox-9router-tailscale
+    network_mode: service:9router
+    environment:
+      - TS_AUTHKEY=${TS_AUTHKEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      # Name the device on Tailscale network
+      - TS_HOSTNAME=local-toolbox-9router
+    volumes:
+      - ./tailscale-data:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
