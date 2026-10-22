@@ -170,13 +170,13 @@ Sau khi vào Dashboard, tạo Org Chart như sau:
 
 ```
 👤 CEO (Bạn - Human Approval)
-├── 🤖 Architect    → Antigravity (webhook)
-├── 🟣 Engineer     → Claude Code (CLI runtime)
-├── 🟢 QA           → GPT Codex (CLI runtime)
-└── 🤖 Tech Writer  → Antigravity (webhook)
+├── 🟣 Architect    → Claude Code
+├── 🟣 Engineer     → Claude Code
+├── 🟢 QA           → Codex
+└── 🟣 Tech Writer  → Claude Code
 ```
 
-> Antigravity cần adapter HTTP/webhook — hiện Paperclip đánh dấu **Coming soon**. Trong lúc chờ, dùng Claude Code cho các vai trò này.
+> Kế hoạch ban đầu gán Architect / Tech Writer cho Antigravity (webhook), nhưng adapter HTTP/webhook của Paperclip đang **Coming soon** — khi có thì chuyển lại. Image đã có sẵn CLI `claude`, `codex`, `gemini`, `opencode`; mỗi agent chọn AI connection trong **Harness / Runtime** rồi **Run test**.
 
 ### Thiết lập budget caps gợi ý:
 - Engineer (Claude Code): 200K tokens/task
