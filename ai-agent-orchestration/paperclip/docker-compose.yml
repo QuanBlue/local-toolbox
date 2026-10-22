@@ -1,0 +1,58 @@
+# ============================================================
+# Paperclip - AI Agent Control Plane
+# Docker Compose Configuration
+# ============================================================
+# Docs: https://github.com/paperclipai/paperclip
+#
+# Usage:
+#   1. ./scripts/run.sh --setup   (lần đầu: tạo .env + secrets, rồi chạy)
+#   2. ./scripts/run.sh           (các lần sau) — xem ./scripts/run.sh --help
+#   3. Mở http://localhost:3100
+#
+# Data persistence:
+#   - Dữ liệu lưu tại PAPERCLIP_DATA_DIR (bind mount, mặc định ~/paperclip-data)
+#   - KHÔNG dùng Docker volume → không bị mất khi down -v
+#   - Backup: ./scripts/backup.sh
+# ============================================================
+
+services:
+  paperclip:
+    image: ghcr.io/paperclipai/paperclip:latest
+    container_name: paperclip-server
+    restart: unless-stopped
+    pids_limit: 2048
+    stop_grace_period: 90s
+    ports:
+      - "${PAPERCLIP_PORT:-3100}:3100"
+    environment:
+      HOST: "0.0.0.0"
+      PAPERCLIP_HOME: "/paperclip"
+
+      # UID/GID của user trong container (entrypoint remap user node + chown data dir).
+      # Lấy từ .env (run.sh tự đặt theo user hiện tại) để data dir vẫn thuộc về bạn trên host.
+      USER_UID: "${USER_UID:-1000}"
+      USER_GID: "${USER_GID:-1000}"
+
+      # LLM Provider Keys (tuỳ chọn — tài khoản AI kết nối trong UI → Connectors)
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+
+      # Deployment
+      PAPERCLIP_DEPLOYMENT_MODE: "${PAPERCLIP_DEPLOYMENT_MODE:-local_trusted}"
+      PAPERCLIP_DEPLOYMENT_EXPOSURE: "${PAPERCLIP_DEPLOYMENT_EXPOSURE:-private}"
+      PAPERCLIP_PUBLIC_URL: "${PAPERCLIP_PUBLIC_URL:-http://localhost:3100}"
+
+      # Security
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET}"
+      PAPERCLIP_TOOL_ACTION_SIGNING_SECRET: "${PAPERCLIP_TOOL_ACTION_SIGNING_SECRET}"
+    volumes:
+      # Bind mount — toàn bộ dữ liệu (DB, companies, secrets, đăng nhập AI connection)
+      # Trên WSL phải nằm trong ổ Linux, không dùng /mnt/<ổ> (NTFS không hỗ trợ chmod 0700)
+      # :z = relabel cho SELinux (Fedora/RHEL), không ảnh hưởng hệ thống khác
+      - ${PAPERCLIP_DATA_DIR:-./data}:/paperclip:z
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s

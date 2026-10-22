@@ -1,0 +1,8 @@
+# Secrets
+.env
+
+# Paperclip data (lưu local, không commit lên git)
+data/
+
+# Backups (quá lớn để commit)
+backups/

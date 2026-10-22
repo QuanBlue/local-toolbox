@@ -1,0 +1,4 @@
+# Shell scripts phải giữ LF để chạy được trên Linux/WSL kể cả khi checkout trên Windows
+*.sh text eol=lf
+.env.example text eol=lf
+docker-compose.yml text eol=lf
